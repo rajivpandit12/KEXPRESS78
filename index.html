@@ -1,0 +1,1332 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>KEXPRESS — Fast. Reliable. Delivery</title>
+
+    <script src="https://unpkg.com/three@0.158.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.158.0/examples/js/controls/OrbitControls.js"></script>
+
+    <style>
+        :root {
+            --bg: #071026;
+            --card: #0b1220;
+            --accent: #ff5a1f;
+            --muted: #9aa6b2;
+            --glass: rgba(255, 255, 255, 0.04);
+            font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial;
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            background: linear-gradient(180deg, #061224, var(--bg));
+            color: #e6eef6
+        }
+
+        a {
+            color: inherit
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 30px;
+            position: sticky;
+            top: 0;
+            background: linear-gradient(180deg, rgba(2, 6, 23, 0.6), transparent);
+            backdrop-filter: blur(6px);
+            z-index: 60
+        }
+
+        .brand {
+            display: flex;
+            gap: 12px;
+            align-items: center
+        }
+
+        .logo {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--accent), #ff8a4b);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 18px rgba(255, 90, 31, 0.18)
+        }
+
+        .title {
+            font-weight: 700;
+            font-size: 18px
+        }
+
+        nav a {
+            margin-left: 18px;
+            color: var(--muted);
+            text-decoration: none
+        }
+
+        /* Cart */
+        .cart-btn {
+            position: relative;
+            margin-left: 18px;
+            cursor: pointer
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -6px;
+            right: -10px;
+            background: #ff3b3b;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 800;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5)
+        }
+
+        /* HERO */
+        .hero {
+            display: grid;
+            grid-template-columns: 1fr 520px;
+            gap: 28px;
+            padding: 36px 30px 16px;
+            align-items: center
+        }
+
+        .hero-left {
+            max-width: 720px
+        }
+
+        h1 {
+            font-size: 38px;
+            margin: 0 0 12px;
+            line-height: 1.02
+        }
+
+        p.lead {
+            color: var(--muted);
+            margin: 0 0 20px
+        }
+
+        .cta {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap; /* Added for responsiveness */
+        }
+
+        .btn {
+            background: var(--accent);
+            border: none;
+            padding: 12px 18px;
+            border-radius: 10px;
+            color: #071021;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(255, 90, 31, 0.18)
+        }
+
+        .btn.secondary {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: var(--muted)
+        }
+
+        /* 3D canvas */
+        .canvas-wrap {
+            width: 150%;
+            height: 460px;
+            border-radius: 18px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            box-shadow: 0 18px 50px rgba(2, 6, 23, 0.6);
+            position: relative;
+            overflow: hidden;
+            background-image: url('kex.jpg');
+            background-size: cover;
+            background-repeat: no-repeat;
+            height: 400px;
+            width: 600px;
+            background-size: cover;
+            background-position: 30px right;
+        }
+
+        canvas {
+            display: block
+        }
+
+        /* Filter */
+        .filters {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            padding: 12px 30px;
+            overflow-x: auto; /* Added for horizontal scrolling on mobile */
+        }
+
+        .category {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            padding: 8px 12px;
+            border-radius: 999px;
+            color: var(--muted);
+            cursor: pointer;
+            flex-shrink: 0; /* Prevents shrinking on smaller screens */
+        }
+
+        .category.active {
+            background: linear-gradient(90deg, rgba(255, 90, 31, 0.12), rgba(255, 138, 75, 0.06));
+            border-color: rgba(255, 90, 31, 0.18);
+            color: var(--accent);
+            font-weight: 700
+        }
+
+        /* Sections & Products */
+        .sections {
+            padding: 22px 30px;
+            display: grid;
+            gap: 28px
+        }
+
+        .section-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap; /* Added */
+        }
+
+        .products {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-top: 12px
+        }
+
+        .product {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+            border: 1px solid var(--glass);
+            padding: 14px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transform-origin: center;
+            transition: transform 280ms ease, box-shadow 280ms ease, opacity 500ms ease;
+            opacity: 0;
+            transform: translateY(18px) scale(0.98)
+        }
+
+        .product.visible {
+            opacity: 1;
+            transform: none
+        }
+
+        .product:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 18px 40px rgba(2, 6, 23, 0.6)
+        }
+
+        .thumb {
+            height: 120px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, rgba(255, 138, 75, 0.08), rgba(255, 90, 31, 0.03));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700
+        }
+
+        .pmeta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center
+        }
+
+        .price {
+            font-weight: 800;
+            color: var(--accent)
+        }
+
+        .add {
+            background: #10a37f;
+            border: none;
+            padding: 8px 10px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 700;
+            cursor: pointer
+        }
+
+        /* reveal animation */
+        .reveal {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: all 600ms cubic-bezier(.2, .9, .2, 1)
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: none
+        }
+
+        /* cart drawer */
+        .cart-drawer {
+            position: fixed;
+            right: 20px;
+            top: 80px;
+            width: 360px;
+            max-height: 72vh;
+            background: linear-gradient(180deg, #071826, #041424);
+            border-radius: 12px;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            box-shadow: 0 30px 80px rgba(2, 6, 23, 0.8);
+            overflow: auto;
+            z-index: 90;
+            display: none;
+        }
+
+        .cart-drawer.show {
+            display: block
+        }
+
+        .cart-item {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.02)
+        }
+
+        .category-btn {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            padding: 6px 10px;
+            border-radius: 8px;
+            color: var(--muted);
+            cursor: pointer
+        }
+
+        /* whatsapp */
+        .whatsapp {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            width: 58px;
+            height: 58px;
+            border-radius: 16px;
+            background: linear-gradient(180deg, #25D366, #1DA851);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(37, 211, 102, 0.18);
+            cursor: pointer
+        }
+
+        /* modal */
+        .modal-back {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .modal-back.show {
+            display: flex;
+        }
+
+        .modal {
+            background: linear-gradient(180deg, #071026, #041224);
+            padding: 18px;
+            border-radius: 12px;
+            width: 400px;
+            max-width: 94%;
+            color: #e6eef6;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+        }
+
+        .form-row {
+            margin-bottom: 10px;
+        }
+
+        .form-row input,
+        .form-row select,
+        .form-row textarea {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: transparent;
+            color: inherit;
+        }
+
+        #fg {
+            margin-right: 1.7px;
+            border-radius: 20px;
+        }
+
+        /* toast */
+        .toast {
+            position: fixed;
+            bottom: 28px;
+            right: 20px;
+            background: var(--accent);
+            color: #071021;
+            padding: 10px 14px;
+            border-radius: 10px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+            transform: translateY(12px);
+            opacity: 0;
+            transition: all .36s ease;
+            z-index: 3000;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 980px) {
+            .hero {
+                grid-template-columns: 1fr;
+            }
+
+            .canvas-wrap {
+                height: 320px;
+                width: 100%; /* Adjust width for mobile */
+                margin: auto; /* Center the image */
+            }
+
+            .sections {
+                padding: 12px;
+            }
+
+            .cart-drawer {
+                right: 10px;
+                left: 10px;
+                width: auto;
+            }
+        }
+
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column; /* Stacks brand and nav */
+                align-items: flex-start;
+                padding: 18px 20px; /* Reduced padding */
+            }
+
+            nav {
+                width: 100%;
+                justify-content: flex-start;
+                margin-top: 15px; /* Added margin */
+                flex-wrap: wrap;
+            }
+
+            nav a {
+                margin-left: 0;
+                margin-right: 18px; /* Added spacing between links */
+            }
+
+            .hero {
+                grid-template-columns: 1fr;
+                gap: 16px;
+                padding: 24px 20px; /* Reduced padding */
+            }
+
+            h1 {
+                font-size: 26px;
+            }
+
+            .tracking {
+                flex-direction: column;
+            }
+
+            .canvas-wrap {
+                height: 260px;
+            }
+
+            .filters {
+                padding: 12px 20px;
+            }
+            
+            .sections {
+                padding: 12px 20px;
+            }
+            
+            .products {
+                grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); /* Smaller grid items */
+            }
+        }
+
+        @media (max-width: 480px) {
+            header {
+                padding: 10px 14px;
+            }
+
+            .logo {
+                width: 40px;
+                height: 40px;
+            }
+
+            .brand {
+                flex-direction: column;
+                align-items: center;
+                gap: 6px;
+                text-align: center;
+            }
+            
+            .title {
+                font-size: 16px;
+            }
+            
+            .muted {
+                font-size: 12px;
+            }
+
+            h1 {
+                font-size: 22px;
+            }
+
+            .btn {
+                padding: 8px 12px;
+                font-size: 14px;
+            }
+
+            .cta {
+                justify-content: center;
+            }
+
+            .product {
+                padding: 10px;
+            }
+
+            .thumb {
+                height: 80px;
+            }
+
+            .tracking {
+                gap: 8px;
+            }
+        }
+
+        /* theme toggle styles */
+        body.light-mode {
+            --bg: #f5f5f5;
+            --card: #ffffff;
+            --accent: #ff5a1f;
+            --muted: #333333;
+            --glass: rgba(0, 0, 0, 0.04);
+            color: #071021;
+            background: linear-gradient(180deg, #fff, #f5f5f5);
+        }
+
+        /* 3D flip card for service details (if used) */
+        .flip {
+            perspective: 1000px
+        }
+
+        .flip-inner {
+            transition: transform 0.8s;
+            transform-style: preserve-3d;
+            position: relative
+        }
+
+        .flip:hover .flip-inner {
+            transform: rotateY(180deg)
+        }
+
+        .flip-front,
+        .flip-back {
+            position: relative;
+            border-radius: 12px;
+            backface-visibility: hidden;
+            padding: 18px
+        }
+
+        .flip-back {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform: rotateY(180deg);
+            background: linear-gradient(180deg, #061624, rgba(255, 255, 255, 0.02))
+        }
+
+        /* floating animation */
+        .float {
+            animation: floaty 6s ease-in-out infinite
+        }
+
+        @keyframes floaty {
+            0% {
+                transform: translateY(0)
+            }
+
+            50% {
+                transform: translateY(-8px)
+            }
+
+            100% {
+                transform: translateY(0)
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="brand">
+            <div class="logo" aria-hidden>
+                <svg width="34" height="34" viewBox="0 0 64 64" xmlns="kex.jpg">
+                    <img id="fg" src="kex.jpg" height="50px" width="50px">
+                    <rect x="4" y="12" width="44" height="28" rx="4" fill="white" opacity="0.12" />
+                    <path d="M8 26 L28 12 L28 36 Z" fill="white" opacity="0.14" />
+                    <path d="M36 28 L52 28 L56 36 L36 36 Z" fill="white" opacity="0.16" />
+                    <circle cx="48" cy="44" r="4" fill="white" opacity="0.18" />
+                </svg>
+            </div>
+            <div>
+                <div class="title">KEXPRESS</div>
+                <div class="muted">Fast • Reliable • IN PANKI KANPUR</div>
+            </div>
+        </div>
+
+        <nav style="display:flex;align-items:center">
+            <button id="theme-toggle"
+                style="margin-left:12px;padding:6px 10px;border-radius:6px;background:var(--accent);color:#071026;font-weight:700;cursor:pointer">🌙</button>
+            <a href="#services" style="margin-left:18px">Services</a>
+            <a href="#products" style="margin-left:12px">Products</a>
+            <a href="#contact" style="margin-left:12px">Contact</a>
+
+            <div class="cart-btn" id="cart-btn" title="Open cart" style="margin-left:18px">
+                <svg class="icon" width="28" height="28" viewBox="0 0 24 24" fill="none"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 3h2l.4 2M7 13h10l3-8H6.4" stroke="currentColor" stroke-width="1.2"
+                        stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <div class="cart-badge" id="cart-count" style="display:none">0</div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="hero-left">
+                <h1>Reliable delivery — <span style="color:var(--accent)">every time</span></h1>
+                <p class="lead">At KExpress, we bring you everything you need – from fresh fruits & vegetables to daily groceries, household essentials, and even electronic items.<br>
+<br>
+✅ Free Delivery – No extra charges, straight to your doorstep.<br>
+<br>
+✅ Starting at just ₹20 – Order anything, even the smallest item, without worry.<br>
+<br>
+
+✅ Wide Range of Products – Food, groceries, fresh produce, and electronics – all in one place.<br>
+<br>
+✅ Easy & Fast Service – Simple ordering and quick delivery you can rely on.<br>
+<br>
+
+With KExpress, shopping is made simple, affordable, and convenient.<br>
+Why step out when KExpress brings it all to you – free of cost!</p>
+
+                <div class="cta">
+                    <button class="btn" onclick="openOrder()">Order Now</button>
+                    <button class="btn secondary" onclick="document.getElementById('track-input').focus()">Track
+                        Parcel</button>
+                </div>
+
+                <div class="tracking" id="track" style="margin-top:12px;display:flex;gap:12px">
+                    <input id="track-input" class="input" placeholder="Enter tracking ID (eg. KX12345)"
+                        style="flex:1;padding:10px;border-radius:10px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:inherit" />
+                    <button class="btn" onclick="simulateTrack()">Track</button>
+                </div>
+
+                <div id="tracking-timeline" style="display:flex;gap:18px;margin-top:12px; flex-wrap: wrap;">
+                    <div>📝 Placed</div>
+                    <div>📦 Packed</div>
+                    <div>🚚 On the Way</div>
+                    <div>🏠 Delivered</div>
+                </div>
+            </div>
+
+            <div class="canvas-wrap">
+                <canvas id="three-canvas"></canvas>
+                <div
+                    style="position:absolute;left:18px;bottom:18px;color:var(--muted);font-size:13px;display:flex;gap:8px;align-items:center">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 7h13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                    </svg>
+                    <div>Live ETA & tracking demo</div>
+                </div>
+            </div>
+        </section>
+
+        <div style="width:100%;height:350px;overflow:hidden;border-bottom:2px solid rgba(255,255,255,0.05);margin-top:18px">
+            <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3558.2873128121137!2d80.2770!3d26.4470!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x399c386f6c4ed8c9%3A0x87f2ed5823f5e7c1!2sPanki%2C%20Kanpur%2C%20Uttar%20Pradesh!5e0!3m2!1sen!2sin!4v1694290040000"
+                width="100%" height="350" style="border:0;" allowfullscreen="" loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade">
+            </iframe>
+        </div>
+
+        <section style="padding:18px 32px">
+            <div class="card" style="display:flex;gap:16px;align-items:center">
+                <div style="flex:1">
+                    <h3 style="margin:0 0 8px">Why KEXPRESS?</h3>
+                    <div class="muted">Professional drivers • Real-time tracking • Easy booking • Secure handling</div>
+                </div>
+                <div style="width:160px;text-align:center">
+                    <div style="font-weight:700;font-size:20px;color:var(--accent)">98%</div>
+                    <div class="muted">On-time deliveries</div>
+                </div>
+            </div>
+        </section>
+
+        <div id="offer-banner"
+            style="position:sticky;top:0;width:100%;background:linear-gradient(90deg,#ff5a1f,#ff8a4b);color:#fff;text-align:center;padding:8px;font-weight:700;animation:marquee 10s linear infinite;">
+            🔥 Big Offer: Free delivery on orders above ₹500! 🔥</div>
+        <style>
+            @keyframes marquee {
+                0% {
+                    transform: translateX(100%);
+                }
+                100% {
+                    transform: translateX(-100%);
+                }
+            }
+        </style>
+
+        <br><br><br>
+
+        <div style="padding:0 30px">
+            <div style="display:flex;gap:6px;">
+                <input id="live-search" placeholder="Search products..."
+                    style="flex:1;padding:10px;margin-bottom:12px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit" />
+                <button id="voice-search"
+                    style="padding:6px 10px;border-radius:6px;background:var(--accent);color:#fff;cursor:pointer">🎤</button>
+            </div>
+        </div>
+
+        <div class="filters" style="margin-top:18px">
+            <div class="category active" data-cat="all">All</div>
+            <div class="category" data-cat="food">Food</div>
+            <div class="category" data-cat="grocery">Grocery</div>
+            <div class="category" data-cat="medicines">Medicines</div>
+            <div class="category" data-cat="documents">Documents</div>
+            <div class="category" data-cat="electronics">Electronics</div>
+            <div class="category" data-cat="clothing">Clothing</div>
+            <div class="category" data-cat="furniture">Furniture</div>
+        </div>
+
+        <section id="products" class="sections">
+            <div class="section" data-section="food">
+                <div class="section-title">
+                    <h2>Food Delivery</h2>
+                    <div class="muted">Fast & hot</div>
+                </div>
+                <div class="products" id="section-food"></div>
+            </div>
+
+            <div class="section" data-section="grocery">
+                <div class="section-title">
+                    <h2>Grocery</h2>
+                    <div class="muted">Daily essentials</div>
+                </div>
+                <div class="products" id="section-grocery"></div>
+            </div>
+
+            <div class="section" data-section="medicines">
+                <div class="section-title">
+                    <h2>Medicines</h2>
+                    <div class="muted">Health & care</div>
+                </div>
+                <div class="products" id="section-medicines"></div>
+            </div>
+
+            <div class="section" data-section="documents">
+                <div class="section-title">
+                    <h2>Documents</h2>
+                    <div class="muted">Secure courier</div>
+                </div>
+                <div class="products" id="section-documents"></div>
+            </div>
+
+            <div class="section" data-section="electronics">
+                <div class="section-title">
+                    <h2>Electronics</h2>
+                    <div class="muted">Fragile handling</div>
+                </div>
+                <div class="products" id="section-electronics"></div>
+            </div>
+
+            <div class="section" data-section="clothing">
+                <div class="section-title">
+                    <h2>Clothing</h2>
+                    <div class="muted">Fashion & apparel</div>
+                </div>
+                <div class="products" id="section-clothing"></div>
+            </div>
+
+            <div class="section" data-section="furniture">
+                <div class="section-title">
+                    <h2>Furniture</h2>
+                    <div class="muted">Large item logistics</div>
+                </div>
+                <div class="products" id="section-furniture"></div>
+            </div>
+        </section>
+
+        <h2 style="padding:18px 30px">⭐ Customer Reviews</h2>
+        <div style="padding:0 30px;display:flex;overflow-x:auto;gap:18px;scroll-snap-type:x mandatory">
+            <div style="min-width:220px;background:var(--card);padding:12px;border-radius:12px;scroll-snap-align:start">
+                “Fast delivery, very reliable!”<br>- Ravi</div>
+            <div style="min-width:220px;background:var(--card);padding:12px;border-radius:12px;scroll-snap-align:start">
+                “Great service for groceries!”<br>- Meera</div>
+            <div style="min-width:220px;background:var(--card);padding:12px;border-radius:12px;scroll-snap-align:start">
+                “Loved the tracking feature.”<br>- Ankit</div>
+        </div>
+
+        <section id="contact" style="padding:18px 30px">
+            <div class="card" style="display:flex;gap:18px;align-items:center;flex-wrap:wrap">
+                <div style="flex:1;min-width:260px">
+                    <h3 style="margin-top:0">Contact Us</h3>
+                    <div class="muted">RRG-192 SUNDER NAGAR PANKI KANPUR , NEAR NARYANA HOSPITAL PANKI MAIN
+                        BRANCH-KEXPRESS</div>
+                    <div style="margin-top:8px">Phone: <a href="tel:+919369604917">+91 93696 04917</a></div>
+                    <div>WhatsApp: <a href="https://wa.me/919369604917" target="_blank">Chat on WhatsApp</a></div>
+                </div>
+                <div style="min-width:240px">
+                    <h4 style="margin:0 0 8px">Request a Quote</h4>
+                    <input class="input" placeholder="Your name" id="qname"
+                        style="width:100%;padding:10px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.03);color:inherit" />
+                    <input class="input" placeholder="Phone or email" id="qcontact"
+                        style="margin-top:8px;width:100%;padding:10px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.03);color:inherit" />
+                    <button class="btn" style="margin-top:8px" onclick="requestQuote()">Send Request</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="cart-drawer" id="cart-drawer" aria-hidden="true">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3 style="margin:6px 0 12px">Your Cart</h3>
+            <button class="btn secondary" onclick="closeCartDrawer()">Close</button>
+        </div>
+        <div id="cart-items"></div>
+        <div style="padding-top:12px;display:flex;justify-content:space-between;align-items:center">
+            <div class="muted">Total</div>
+            <div style="font-weight:800;color:var(--accent)" id="cart-total">₹0</div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px">
+            <button class="btn" onclick="openCheckout()">Checkout</button>
+            <button class="btn secondary" onclick="clearCart()">Clear</button>
+        </div>
+    </div>
+
+    <div class="whatsapp" title="Chat on WhatsApp"
+        onclick="window.open('https://wa.me/919369604917','_blank')">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20.5 3.5A10.5 10.5 0 1 0 24 12a10.5 10.5 0 0 0-3.5-8.5zM12 20.5c-1.6 0-3.2-.4-4.6-1.2L4 20l1.8-3.4A8.4 8.4 0 1 1 20.4 11c0 4.6-3.8 9.4-8.4 9.5z"
+                opacity="0.12"></path>
+            <path
+                d="M17 14.2c-.3-.2-1.7-.8-2-.9-.4-.2-.6-.2-.9.2-.3.4-1 0-1.6-.5-.6-.6-1.1-1.4-1.3-1.7-.2-.3 0-.5.2-.7.2-.2.3-.6.4-.9.1-.3 0-.6-.1-.8-.2-.2-.9-1.9-1.2-2.6-.3-.7-.6-.6-.9-.6-.2 0-.5 0-.8 0s-.9.1-1.4.7c-.5.6-1.6 1.6-1.6 3.9s1.6 4.5 1.8 4.8c.2.3 2.8 4.4 6.7 6 3.9 1.6 3.9 1.1 4.6 1 0 0 .9-1.1 1-2.2.1-1.1.1-2-.8-2.7-.9-.7-1.8-1.1-2.3-1.3z"
+                fill="white"></path>
+        </svg>
+    </div>
+
+    <footer
+        style="padding:18px 30px;border-top:1px solid rgba(255,255,255,0.02);display:flex;justify-content:space-between;align-items:center; flex-wrap: wrap; gap: 10px;">
+        <div class="muted">© <span id="year"></span> KEXPRESS · All rights reserved</div>
+        <div class="muted">Follow us: Instagram · Facebook · LinkedIn</div>
+    </footer>
+
+    <div class="modal-back" id="modal-back">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="checkout-title">
+            <h3 id="checkout-title">Checkout</h3>
+            <div style="margin-top:8px;font-size:14px" id="checkout-summary">You have 0 items — Total ₹0</div>
+
+            <div class="form-row">
+                <input id="cust-name" placeholder="Your name" />
+            </div>
+            <div class="form-row">
+                <input id="cust-phone" placeholder="Phone (required)" />
+            </div>
+            <div class="form-row">
+                <textarea id="cust-address" placeholder="Delivery address" rows="3"></textarea>
+            </div>
+            <div class="form-row">
+                <select id="payment-method">
+                    <option value="COD">Cash on Delivery (COD)</option>
+                    <option value="Online">Online Payment</option>
+                </select>
+            </div>
+
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+                <button class="btn secondary" onclick="closeCheckout()">Cancel</button>
+                <button class="btn" onclick="confirmOrder()">Confirm Order</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast" aria-hidden="true">Added to cart</div>
+
+    <script>
+        function confirmOrder() {
+            const name = (document.getElementById('cust-name').value || '—').trim();
+            const phone = (document.getElementById('cust-phone').value || '').trim();
+            const address = (document.getElementById('cust-address').value || '—').trim();
+            const payment = document.getElementById('payment-method').value || 'COD';
+
+            if (!phone) {
+                alert('Phone is required to confirm order.');
+                return;
+            }
+
+            // Build order details
+            let msg = `*New Order from KEXPRESS*%0A`;
+            msg += `Name: ${encodeURIComponent(name)}%0A`;
+            msg += `Phone: ${encodeURIComponent(phone)}%0A`;
+            msg += `Address: ${encodeURIComponent(address)}%0A`;
+            msg += `Payment: ${encodeURIComponent(payment)}%0A`;
+            msg += `%0A*Items:*%0A`;
+
+            for (let id in CART) {
+                const qty = CART[id];
+                const p = PRODUCTS.find(x => x.id === id);
+                if (!p) continue;
+                msg += `${encodeURIComponent(p.name)} x${qty} — ₹${p.price * qty}%0A`;
+            }
+
+            msg += `%0A*Total:* ₹${cartTotal()}%0A`;
+            const datetime = new Date();
+            msg += `Time: ${encodeURIComponent(datetime.toLocaleString())}`;
+
+            // WhatsApp number (your number)
+            const waNumber = '919369604917';
+            // Open WhatsApp web/mobile with message
+            const url = `https://wa.me/${waNumber}?text=${msg}`;
+
+            // Close modal and clear cart (or optionally keep)
+            closeCheckout();
+            // optional: clearCart(); // keep or clear as per your flow
+            // Open WA in new tab
+            window.open(url, '_blank');
+
+            // show small confirmation locally
+            showToast('Opening WhatsApp to confirm order...');
+        }
+
+        // small helpers
+        document.getElementById('year').textContent = new Date().getFullYear();
+
+        function openOrder() {
+            window.scrollTo({
+                top: document.querySelector('#products').offsetTop - 20,
+                behavior: 'smooth'
+            });
+        }
+
+        function requestQuote() {
+            const name = document.getElementById('qname').value || '—';
+            const contact = document.getElementById('qcontact').value || '—';
+            alert('Thanks ' + name + "! We'll reach out to " + contact);
+        }
+
+        // PRODUCTS (demo)
+        const PRODUCTS = [{
+                id: 'f1',
+                section: 'food',
+                name: 'Margherita Pizza',
+                price: 249
+            }, {
+                id: 'f2',
+                section: 'food',
+                name: 'Veg Burger',
+                price: 129
+            }, {
+                id: 'f3',
+                section: 'food',
+                name: 'Sushi Box',
+                price: 399
+            }, {
+                id: 'f4',
+                section: 'food',
+                name: 'Pasta Alfredo',
+                price: 199
+            }, {
+                id: 'g1',
+                section: 'grocery',
+                name: 'Organic Milk (1L)',
+                price: 59
+            }, {
+                id: 'g2',
+                section: 'grocery',
+                name: 'Rice 5kg',
+                price: 399
+            }, {
+                id: 'g3',
+                section: 'grocery',
+                name: 'Cooking Oil 1L',
+                price: 199
+            }, {
+                id: 'g4',
+                section: 'grocery',
+                name: 'Sugar 2kg',
+                price: 89
+            }, {
+                id: 'm1',
+                section: 'medicines',
+                name: 'Paracetamol (10pcs)',
+                price: 49
+            }, {
+                id: 'm2',
+                section: 'medicines',
+                name: 'Cough Syrup',
+                price: 159
+            }, {
+                id: 'm3',
+                section: 'medicines',
+                name: 'Vitamin C Pack',
+                price: 299
+            }, {
+                id: 'm4',
+                section: 'medicines',
+                name: 'Bandage Kit',
+                price: 129
+            }, {
+                id: 'd1',
+                section: 'documents',
+                name: 'Legal Document Courier',
+                price: 149
+            }, {
+                id: 'd2',
+                section: 'documents',
+                name: 'Certified Copies',
+                price: 99
+            }, {
+                id: 'd3',
+                section: 'documents',
+                name: 'A4 Paper Pack',
+                price: 249
+            }, {
+                id: 'd4',
+                section: 'documents',
+                name: 'Diploma Secure Delivery',
+                price: 199
+            }, {
+                id: 'e1',
+                section: 'electronics',
+                name: 'Phone Charger',
+                price: 299
+            }, {
+                id: 'e2',
+                section: 'electronics',
+                name: 'Bluetooth Earbuds',
+                price: 899
+            }, {
+                id: 'e3',
+                section: 'electronics',
+                name: 'Power Bank',
+                price: 1299
+            }, {
+                id: 'e4',
+                section: 'electronics',
+                name: 'Smartwatch',
+                price: 2499
+            }, {
+                id: 'c1',
+                section: 'clothing',
+                name: 'T-Shirt',
+                price: 399
+            }, {
+                id: 'c2',
+                section: 'clothing',
+                name: 'Jeans',
+                price: 999
+            }, {
+                id: 'c3',
+                section: 'clothing',
+                name: 'Jacket',
+                price: 1999
+            }, {
+                id: 'c4',
+                section: 'clothing',
+                name: 'Sneakers',
+                price: 1499
+            }, {
+                id: 'u1',
+                section: 'furniture',
+                name: 'Office Chair',
+                price: 3499
+            }, {
+                id: 'u2',
+                section: 'furniture',
+                name: 'Side Table',
+                price: 1299
+            }, {
+                id: 'u3',
+                section: 'furniture',
+                name: 'Bookshelf',
+                price: 4599
+            }, {
+                id: 'u4',
+                section: 'furniture',
+                name: 'Dining Chair',
+                price: 1599
+            }];
+
+        // Render products with flipper/backside demo
+        function renderProducts() {
+            const sections = ['food', 'grocery', 'medicines', 'documents', 'electronics', 'clothing', 'furniture'];
+            sections.forEach(s => {
+                const container = document.getElementById('section-' + s);
+                if (!container) return;
+                container.innerHTML = '';
+                PRODUCTS.filter(p => p.section === s).forEach(p => {
+                    const el = document.createElement('div');
+                    el.className = 'product';
+                    el.setAttribute('data-id', p.id);
+                    el.setAttribute('data-section', p.section);
+                    el.innerHTML = `
+            <div class="flip" style="height:100%">
+              <div class="flip-inner" style="position:relative">
+                <div class="flip-front" style="padding:12px">
+                  <div class="thumb">${p.name.split(' ').slice(0, 2).join(' ')}</div>
+                  <div style="flex:1;margin-top:8px">
+                    <div style="font-weight:700">${p.name}</div>
+                    <div class="muted" style="font-size:13px">Fast delivery • Secure</div>
+                  </div>
+                  <div class="pmeta" style="margin-top:8px">
+                    <div class="price">₹${p.price}</div>
+                    <button class="add" onclick="addToCart('${p.id}')">Add</button>
+                  </div>
+                </div>
+                <div class="flip-back" style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:12px">
+                  <div style="font-weight:700">${p.name}</div>
+                  <div style="margin-top:6px">Quick delivery to Panki & Kanpur area.</div>
+                  <div style="margin-top:8px">Price: ₹${p.price}</div>
+                  <button class="add" style="margin-top:10px" onclick="addToCart('${p.id}')">Add to Cart</button>
+                </div>
+              </div>
+            </div>
+          `;
+                    container.appendChild(el);
+                });
+            });
+            observeReveal();
+        }
+
+        // category filter (click handlers)
+        document.addEventListener('click', e => {
+            if (e.target.classList && e.target.classList.contains('category')) {
+                document.querySelectorAll('.category').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                filterCategory(e.target.getAttribute('data-cat'));
+            }
+        });
+
+        function filterCategory(cat) {
+            document.querySelectorAll('.section').forEach(section => {
+                const name = section.getAttribute('data-section');
+                section.style.display = (cat === 'all' || name === cat) ? 'block' : 'none';
+            });
+            window.location.hash = '#products';
+        }
+
+        // CART
+        let CART = {};
+        const cartCountEl = document.getElementById('cart-count');
+        const cartDrawer = document.getElementById('cart-drawer');
+        const cartBtn = document.getElementById('cart-btn');
+        cartBtn.addEventListener('click', () => cartDrawer.classList.toggle('show'));
+
+        // Function to close the cart drawer
+        function closeCartDrawer() {
+            cartDrawer.classList.remove('show');
+        }
+
+        function addToCart(id) {
+            if (!CART[id]) CART[id] = 0;
+            CART[id]++;
+            updateCartBadge();
+            renderCart();
+            showToast('Added to cart');
+        }
+
+        function updateCartBadge() {
+            const total = totalItems();
+            if (total > 0) {
+                cartCountEl.style.display = 'inline-block';
+                cartCountEl.textContent = total;
+                cartCountEl.animate([{
+                    transform: 'scale(1)'
+                }, {
+                    transform: 'scale(1.25)'
+                }, {
+                    transform: 'scale(1)'
+                }], {
+                    duration: 360
+                });
+            } else {
+                cartCountEl.style.display = 'none';
+            }
+        }
+
+        function totalItems() {
+            return Object.values(CART).reduce((s, n) => s + n, 0);
+        }
+
+        function cartTotal() {
+            let total = 0;
+            for (let id in CART) {
+                const p = PRODUCTS.find(x => x.id === id);
+                if (p) total += p.price * CART[id];
+            }
+            return total;
+        }
+
+        function renderCart() {
+            const container = document.getElementById('cart-items');
+            container.innerHTML = '';
+            if (totalItems() === 0) {
+                container.innerHTML = '<div class="muted">Your cart is empty.</div>';
+                document.getElementById('cart-total').textContent = '₹0';
+                cartCountEl.style.display = 'none';
+                return;
+            }
+            for (let id in CART) {
+                const qty = CART[id];
+                const p = PRODUCTS.find(x => x.id === id);
+                if (!p) continue;
+                const item = document.createElement('div');
+                item.className = 'cart-item';
+                item.innerHTML = `
+          <div style="flex:1">
+            <div style="font-weight:700">${p.name}</div>
+            <div class="muted">₹${p.price} × ${qty}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-weight:800;color:var(--accent)">₹${p.price * qty}</div>
+            <div style="margin-top:6px">
+              <button onclick="changeQty('${id}',-1)" class="category-btn">-</button>
+              <button onclick="changeQty('${id}',1)" class="category-btn">+</button>
+            </div>
+          </div>
+        `;
+                container.appendChild(item);
+            }
+            document.getElementById('cart-total').textContent = '₹' + cartTotal();
+            cartCountEl.style.display = 'inline-block';
+            cartCountEl.textContent = totalItems();
+        }
+
+        function changeQty(id, delta) {
+            if (!CART[id]) return;
+            CART[id] += delta;
+            if (CART[id] <= 0) delete CART[id];
+            renderCart();
+            updateCartBadge();
+        }
+
+        function clearCart() {
+            CART = {};
+            renderCart();
+            updateCartBadge();
+        }
+
+        // Checkout flow: open modal with summary
+        function openCheckout() {
+            if (totalItems() === 0) {
+                alert('Cart is empty. Please add items.');
+                return;
+            }
+            document.getElementById('modal-back').classList.add('show');
+            document.getElementById('checkout-summary').textContent = `You have ${totalItems()} items — Total ₹${cartTotal()}`;
+        }
+
+        function closeCheckout() {
+            document.getElementById('modal-back').classList.remove('show');
+        }
+
+        // older checkout button (in cart drawer). We'll show modal
+        function checkout() {
+            openCheckout();
+        }
+
+        // Reveal observer for products
+        function observeReveal() {
+            const obs = new IntersectionObserver((entries) => {
+                entries.forEach(en => {
+                    if (en.isIntersecting) {
+                        en.target.classList.add('visible');
+                        obs.unobserve(en.target);
+                    }
+                });
+            }, {
+                threshold: 0.1
+            });
+            document.querySelectorAll('.product').forEach(el => obs.observe(el));
+        }
+
+        // Search and filter
+        document.getElementById('live-search').addEventListener('input', e => {
+            const query = e.target.value.toLowerCase().trim();
+            document.querySelectorAll('.product').forEach(p => {
+                const name = p.querySelector('div[style="font-weight:700"]').textContent.toLowerCase();
+                const section = p.getAttribute('data-section');
+                const isVisible = (query === '' || name.includes(query) || section.includes(query));
+                p.style.display = isVisible ? 'block' : 'none';
+            });
+        });
+
+        // Theme toggle
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
+            document.getElementById('theme-toggle').textContent = isLight ? '☀️' : '🌙';
+        });
+
+        // Toast
+        let toastTimeout;
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Tracking
+        function simulateTrack() {
+            const trackingInput = document.getElementById('track-input').value.trim();
+            if (!trackingInput) return;
+            showToast('Tracking ' + trackingInput + '...');
+        }
+
+
+        // INITIALIZE
+        document.addEventListener('DOMContentLoaded', () => {
+            renderProducts();
+            renderCart(); // Initial render for cart
+        });
+    </script>
+</body>
+
+</html>
